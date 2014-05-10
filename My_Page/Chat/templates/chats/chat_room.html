@@ -1,0 +1,52 @@
+{% load staticfiles %}
+{% block header %}
+ <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+ <script type="text/javascript" src="{{STATIC_URL}}jquery.gracefulWebSocket.js"></script>
+ <script type="text/javascript">
+    $(document).ready( function() {
+    var chat_id = "{{chat.name}}".split(" ").join(".")
+    window.chat = {};
+    chat.ws = $.gracefulWebSocket("ws://127.0.0.1:1025/ws");
+    chat.send = function (message) {
+      chat_id = "{{chat.name}}".split(" ").join(".")
+      chat.ws.send(chat_id+","+message);
+    }
+
+    chat.ws.onmessage = function (event) {
+      var messageFromServer = event.data;
+      var firstIndex = messageFromServer.indexOf(",");
+      if (firstIndex == "-1"){
+	  chat_id = chat_id;
+      }
+      else{
+	  chat_id = messageFromServer.substring(0, firstIndex);
+	  messageFromServer = messageFromServer.substring(firstIndex+1)
+      }
+      var list_element = document.createElement('li');
+      list_element.innerHTML = messageFromServer;
+      $("#message_list."+chat_id+" ul").prepend(list_element);
+    };
+
+    var inputBox = document.getElementById("inputbox");
+
+    inputbox.addEventListener("keydown", function(e) {
+      if (!e) { var e = window.event; }
+
+      if (e.keyCode == 13) {
+        e.preventDefault(); // sometimes useful
+        chat.send(inputbox.value);
+        inputbox.value="";
+      }
+    }, false);
+
+    });
+ </script>
+{% endblock %}
+<body>
+  <h1> {{ chat.name }} </h1>
+    <textarea name="term" id="inputbox" cols="40" rows="4"></textarea>
+    <div id="message_list" class="{{ chat.name }}">
+      <ul>
+      </ul>
+    </div>
+</body>
